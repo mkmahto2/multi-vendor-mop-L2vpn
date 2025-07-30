@@ -15,8 +15,8 @@ Here’s the full standalone webpage with a dropdown for all 5 vendor types, and
 
 💾 Save as multi-vendor-mop.html and open in your browser:
 html
-Copy
-Edit
+~~~
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -156,6 +156,8 @@ configure bridge ${vlan}
   </script>
 </body>
 </html>
+
+```
 ✅ Supported Vendor Config Styles
 Vendor	Description Style
 Cisco 902	IOS-XE service instance (ASR 902/903)
