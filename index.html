@@ -1,153 +1,401 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Multi-Vendor MOP Generator</title>
-  <style>
-    body { font-family: Arial, sans-serif; background: #f8f8f8; padding: 25px; max-width: 900px; margin: auto; }
-    label { display: block; margin-top: 15px; font-weight: bold; }
-    input, select { padding: 6px; width: 340px; }
-    button { margin-top: 25px; padding: 10px 25px; font-size: 16px; cursor: pointer; }
-    textarea { width: 100%; height: 440px; margin-top: 20px; font-family: monospace; white-space: pre; }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>MOP Generator - Single & Combo</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    max-width: 900px;
+    margin: 30px auto;
+    background: #f7f7f7;
+    padding: 20px 30px;
+    border-radius: 8px;
+  }
+  h2 {
+    margin-bottom: 10px;
+  }
+  label {
+    font-weight: bold;
+    display: block;
+    margin-top: 15px;
+  }
+  input, select {
+    width: 100%;
+    padding: 7px 10px;
+    margin-top: 5px;
+    box-sizing: border-box;
+  }
+  textarea {
+    width: 100%;
+    height: 320px;
+    margin-top: 20px;
+    font-family: monospace;
+    white-space: pre-wrap;
+    background: #222;
+    color: #eee;
+    padding: 15px;
+    border-radius: 5px;
+  }
+  button {
+    margin-top: 20px;
+    padding: 12px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    border: none;
+    border-radius: 5px;
+  }
+  button.generate {
+    background-color: #2e7d32;
+    color: white;
+  }
+  button.download {
+    background-color: #1565c0;
+    color: white;
+    margin-left: 10px;
+  }
+  .side-container {
+    background: white;
+    padding: 20px 25px;
+    margin-top: 25px;
+    border-radius: 6px;
+    box-shadow: 0 0 6px #ccc;
+  }
+  .side-container h3 {
+    margin-top: 0;
+  }
+  .hidden {
+    display: none;
+  }
+</style>
 </head>
 <body>
 
-  <h1>🌐 Multi-Vendor XConnect MOP Generator</h1>
+<h2>📄 MOP Generator (Single or Combo)</h2>
 
-  <label for="vendor">Select Vendor:</label>
-  <select id="vendor">
-    <option value="cisco-902">Cisco 902 (IOS-XE)</option>
-    <option value="cisco-903">Cisco 903 (IOS-XE)</option>
-    <option value="cisco-9010">Cisco 9010 (IOS-XR)</option>
-    <option value="juniper">Juniper</option>
-    <option value="alcatel">Alcatel (Nokia SR)</option>
-    <option value="eci">ECI</option>
-  </select>
+<label for="combo">Select Vendor or Combo</label>
+<select id="combo" onchange="toggleSides()">
+  <option value="cisco-903">Cisco 903 (Single)</option>
+  <option value="juniper">Juniper (Single)</option>
+  <option value="alcatel">Alcatel (Single)</option>
+  <option value="eci">ECI (Single)</option>
+  <option value="cisco-juniper">Cisco ⇄ Juniper (Combo)</option>
+  <option value="juniper-juniper">Juniper ⇄ Juniper (Combo)</option>
+  <option value="cisco-alcatel">Cisco ⇄ Alcatel (Combo)</option>
+  <option value="eci-juniper">ECI ⇄ Juniper (Combo)</option>
+  <option value="alcatel-juniper">Alcatel ⇄ Juniper (Combo)</option>
+  <option value="eci-cisco">ECI ⇄ Cisco (Combo)</option>
+  <option value="juniper-alcatel">Juniper ⇄ Alcatel (Combo)</option>
+</select>
 
-  <label for="interface">Interface:</label>
-  <input type="text" id="interface" placeholder="e.g. Gig0/0/0 or xe-4/2/1" />
+<!-- Single side input container -->
+<div id="singleSide" class="side-container">
+  <h3>Single Vendor Details</h3>
+  <label for="int1">Interface</label>
+  <input type="text" id="int1" placeholder="e.g. GigabitEthernet0/5/4 or xe-4/2/1" />
 
-  <label for="unit_vlan">VLAN / Unit / Service ID:</label>
-  <input type="text" id="unit_vlan" placeholder="e.g. 2589 or 3377" />
+  <label for="vlan1">VLAN</label>
+  <input type="text" id="vlan1" placeholder="e.g. 2589" />
 
-  <label for="description">Description:</label>
-  <input type="text" id="description" placeholder="e.g. TO_DUMMY_1937568" />
+  <label for="desc1">Description</label>
+  <input type="text" id="desc1" placeholder="e.g. TO_DUMMY_123456" />
 
-  <label for="remote_ip">Remote PE IP:</label>
-  <input type="text" id="remote_ip" placeholder="e.g. 182.19.97.187" />
+  <label for="ip1">Remote IP (Neighbor)</label>
+  <input type="text" id="ip1" placeholder="e.g. 182.19.97.187" />
 
-  <label for="vcid">VC ID / PW ID:</label>
-  <input type="text" id="vcid" placeholder="e.g. 21050863" />
+  <label for="vcid1">VC ID</label>
+  <input type="text" id="vcid1" placeholder="e.g. 21050863" />
 
-  <button onclick="generateMOP()">Generate MOP</button>
+  <label for="mtu1">MTU (optional)</label>
+  <input type="text" id="mtu1" placeholder="e.g. 9000" />
 
-  <textarea id="output" placeholder="Generated MOP will appear here..." readonly></textarea>
+  <label for="pwclass1">PW-Class (Cisco only, optional)</label>
+  <input type="text" id="pwclass1" placeholder="e.g. VLAN" />
+</div>
 
-  <script>
-    function generateMOP() {
-      const vendor = document.getElementById("vendor").value;
-      const iface = document.getElementById("interface").value.trim();
-      const vlan = document.getElementById("unit_vlan").value.trim();
-      const desc = document.getElementById("description").value.trim();
-      const ip = document.getElementById("remote_ip").value.trim();
-      const vcid = document.getElementById("vcid").value.trim();
+<!-- Combo two sides input container -->
+<div id="comboSides" class="hidden">
+  <div class="side-container" style="margin-bottom: 30px;">
+    <h3>PE1 Details</h3>
+    <label for="int2_1">Interface</label>
+    <input type="text" id="int2_1" placeholder="e.g. TenGigE0/3/0/4 or xe-4/2/1" />
 
-      if (!iface || !vlan || !desc || !ip || !vcid) {
-        alert("Please fill in all fields.");
-        return;
-      }
+    <label for="vlan2_1">VLAN</label>
+    <input type="text" id="vlan2_1" placeholder="e.g. 3377" />
 
-      let mop = "";
+    <label for="desc2_1">Description</label>
+    <input type="text" id="desc2_1" placeholder="e.g. TO_DUMMY_1338342" />
 
-      if (vendor === "cisco-902") {
-        mop = `========== Cisco 902 (IOS-XE) MOP ==========\n
-interface ${iface}
- service instance ${vlan} ethernet
-  description ${desc}
-  encapsulation dot1q ${vlan}
-  rewrite ingress tag pop 1 symmetric
-  xconnect ${ip} ${vcid} encapsulation mpls\n
-🔍 show run interface ${iface}
-🔍 show xconnect all\n`;
-      }
+    <label for="ip2_1">Remote IP (Neighbor)</label>
+    <input type="text" id="ip2_1" placeholder="e.g. 182.19.96.8" />
 
-      else if (vendor === "cisco-903") {
-        mop = `========== Cisco 903 (IOS-XE) MOP ==========\n
-interface ${iface}
- service instance ${vlan} ethernet
-  description ${desc}
-  encapsulation dot1q ${vlan}
-  rewrite ingress tag pop 1 symmetric
-  xconnect ${ip} ${vcid} encapsulation mpls\n
-🔧 MPLS XConnect using service instance ${vlan} on interface ${iface}\n
-🔍 show l2vpn xconnect
-🔍 show xconnect summary\n`;
-      }
+    <label for="vcid2_1">VC ID</label>
+    <input type="text" id="vcid2_1" placeholder="e.g. 21053377" />
 
-      else if (vendor === "cisco-9010") {
-        mop = `========== Cisco 9010 (IOS-XR) MOP ==========\n
-interface ${iface}.${vlan} l2transport
- description ${desc}
- encapsulation dot1q ${vlan}
- rewrite ingress tag pop 1 symmetric
- mtu 9018
+    <label for="mtu2_1">MTU (optional)</label>
+    <input type="text" id="mtu2_1" placeholder="e.g. 9000" />
 
-l2vpn xconnect group EOMPLS_xconnect
- p2p ${vlan}_XCONN
-  interface ${iface}.${vlan}
-  neighbor ipv4 ${ip} pw-id ${vcid}
-  neighbor ipv4 ${ip} pw-id ${vcid} pw-class VLAN\n
-🔍 show l2vpn xconnect group EOMPLS_xconnect
-🔍 show mpls l2transport vc interface ${iface}.${vlan}\n`;
-      }
+    <label for="pwclass2_1">PW-Class (Cisco only, optional)</label>
+    <input type="text" id="pwclass2_1" placeholder="e.g. VLAN" />
+  </div>
 
-      else if (vendor === "juniper") {
-        mop = `========== Juniper MOP ==========\n
-set interfaces ${iface} unit ${vlan} apply-groups-except ARP_RE
-set interfaces ${iface} unit ${vlan} description ${desc}
-set interfaces ${iface} unit ${vlan} encapsulation vlan-ccc
-set interfaces ${iface} unit ${vlan} vlan-id ${vlan}
-set interfaces ${iface} unit ${vlan} input-vlan-map swap
-set interfaces ${iface} unit ${vlan} input-vlan-map vlan-id ${vlan}
-set interfaces ${iface} unit ${vlan} output-vlan-map swap
-set protocols l2circuit neighbor ${ip} interface ${iface}.${vlan} virtual-circuit-id ${vcid}
-set protocols l2circuit neighbor ${ip} interface ${iface}.${vlan} no-control-word
-set protocols l2circuit neighbor ${ip} interface ${iface}.${vlan} mtu 9000\n
-🔍 show configuration interfaces ${iface}
-🔍 show configuration protocols l2circuit\n`;
-      }
+  <div class="side-container">
+    <h3>PE2 Details</h3>
+    <label for="int2_2">Interface</label>
+    <input type="text" id="int2_2" placeholder="e.g. TenGigE0/3/0/5 or xe-4/2/2" />
 
-      else if (vendor === "alcatel") {
-        mop = `========== Alcatel (Nokia SR) MOP ==========\n
-configure service
- service ${vlan} customer 1 create
-  description "${desc}"
-  sap ${iface}:${vlan} create
-  encapsulation dot1q ${vlan}
-  exit
-  spoke-sdp ${ip}:${vcid} create
-   no shutdown
-exit all\n
-🔍 show service id ${vlan} detail
-🔍 show service sdp-using\n`;
-      }
+    <label for="vlan2_2">VLAN</label>
+    <input type="text" id="vlan2_2" placeholder="e.g. 3377" />
 
-      else if (vendor === "eci") {
-        mop = `========== ECI MOP ==========\n
-configure bridge ${vlan}
- port ${iface} vlan ${vlan}
- l2vpn enable
- pw peer ${ip} vc-id ${vcid}
- description ${desc}
- mtu 9000
- exit\n
-🔍 show bridge ${vlan}
-🔍 show pw status\n`;
-      }
+    <label for="desc2_2">Description</label>
+    <input type="text" id="desc2_2" placeholder="e.g. TO_DUMMY_1338343" />
 
-      document.getElementById("output").value = mop;
+    <label for="ip2_2">Remote IP (Neighbor)</label>
+    <input type="text" id="ip2_2" placeholder="e.g. 182.19.96.9" />
+
+    <label for="vcid2_2">VC ID</label>
+    <input type="text" id="vcid2_2" placeholder="e.g. 21053378" />
+
+    <label for="mtu2_2">MTU (optional)</label>
+    <input type="text" id="mtu2_2" placeholder="e.g. 9000" />
+
+    <label for="pwclass2_2">PW-Class (Cisco only, optional)</label>
+    <input type="text" id="pwclass2_2" placeholder="e.g. VLAN" />
+  </div>
+</div>
+
+<button class="generate" onclick="generate()">Generate MOP</button>
+<button class="download" onclick="downloadConfig()">Download Config as .txt</button>
+
+<textarea id="output" readonly placeholder="Generated config will appear here..."></textarea>
+
+<script>
+  const singleSideDiv = document.getElementById('singleSide');
+  const comboSidesDiv = document.getElementById('comboSides');
+  const comboSelect = document.getElementById('combo');
+  const outputArea = document.getElementById('output');
+
+  function toggleSides() {
+    const val = comboSelect.value;
+    const combos = [
+      'cisco-juniper', 'juniper-juniper', 'cisco-alcatel',
+      'eci-juniper', 'alcatel-juniper', 'eci-cisco', 'juniper-alcatel'
+    ];
+    if (combos.includes(val)) {
+      singleSideDiv.classList.add('hidden');
+      comboSidesDiv.classList.remove('hidden');
+    } else {
+      comboSidesDiv.classList.add('hidden');
+      singleSideDiv.classList.remove('hidden');
     }
-  </script>
+    outputArea.value = '';
+  }
+  toggleSides();
+
+  function validateNotEmpty(value, name) {
+    if (!value.trim()) {
+      alert(`Please fill the "${name}" field.`);
+      return false;
+    }
+    return true;
+  }
+
+  function generateCiscoConfig(iface, vlan, desc, ip, vcid, mtu, pwclass) {
+    mtu = mtu || "9018";
+    let pwLine = pwclass ? ` neighbor ipv4 ${ip} pw-id ${vcid} pw-class ${pwclass}` : ` neighbor ipv4 ${ip} pw-id ${vcid}`;
+    return `interface ${iface}.${vlan}
+ encapsulation dot1q ${vlan}
+ description ${desc}
+ mtu ${mtu}
+ l2transport
+ xconnect group XC_GROUP p2p ${vlan}_VC${vcid}${pwclass ? ` pw-class ${pwclass}` : ""}
+${pwLine}
+!
+`;
+  }
+
+  function generateJuniperConfig(iface, vlan, desc, ip, vcid, mtu) {
+    mtu = mtu || "9000";
+    return `set interfaces ${iface} unit ${vlan} description "${desc}"
+set interfaces ${iface} unit ${vlan} vlan-id ${vlan}
+set interfaces ${iface} unit ${vlan} mtu ${mtu}
+set interfaces ${iface} unit ${vlan} family mpls
+set protocols l2circuit neighbor ${ip} interface ${iface}.${vlan} virtual-circuit-id ${vcid}
+!
+`;
+  }
+
+  function generateAlcatelConfig(iface, vlan, desc, ip, vcid, mtu) {
+    mtu = mtu || "9000";
+    return `configure interface ${iface}.${vlan} description "${desc}"
+configure interface ${iface}.${vlan} vlan ${vlan}
+configure interface ${iface}.${vlan} mtu ${mtu}
+configure pw add vc-id ${vcid} neighbor ${ip}
+!
+`;
+  }
+
+  function generateEciConfig(iface, vlan, desc, ip, vcid, mtu) {
+    mtu = mtu || "9000";
+    return `interface ${iface}.${vlan} description "${desc}"
+interface ${iface}.${vlan} mtu ${mtu}
+vc-id ${vcid} neighbor ${ip}
+!
+`;
+  }
+
+  function getVendorFromValue(val) {
+    if (val.startsWith("cisco")) return "cisco";
+    if (val.startsWith("juniper")) return "juniper";
+    if (val.startsWith("alcatel")) return "alcatel";
+    if (val.startsWith("eci")) return "eci";
+    return "";
+  }
+
+  function generate() {
+    outputArea.value = "";
+    const val = comboSelect.value;
+
+    // Single vendor generate
+    const combos = [
+      'cisco-juniper', 'juniper-juniper', 'cisco-alcatel',
+      'eci-juniper', 'alcatel-juniper', 'eci-cisco', 'juniper-alcatel'
+    ];
+    if (!combos.includes(val)) {
+      // Single vendor form fields
+      const iface = document.getElementById('int1').value.trim();
+      const vlan = document.getElementById('vlan1').value.trim();
+      const desc = document.getElementById('desc1').value.trim();
+      const ip = document.getElementById('ip1').value.trim();
+      const vcid = document.getElementById('vcid1').value.trim();
+      const mtu = document.getElementById('mtu1').value.trim();
+      const pwclass = document.getElementById('pwclass1').value.trim();
+
+      if (!validateNotEmpty(iface, "Interface")) return;
+      if (!validateNotEmpty(vlan, "VLAN")) return;
+      if (!validateNotEmpty(desc, "Description")) return;
+      if (!validateNotEmpty(ip, "Remote IP")) return;
+      if (!validateNotEmpty(vcid, "VC ID")) return;
+
+      const vendor = getVendorFromValue(val);
+
+      let result = "";
+      switch(vendor) {
+        case "cisco":
+          result = generateCiscoConfig(iface, vlan, desc, ip, vcid, mtu, pwclass);
+          break;
+        case "juniper":
+          result = generateJuniperConfig(iface, vlan, desc, ip, vcid, mtu);
+          break;
+        case "alcatel":
+          result = generateAlcatelConfig(iface, vlan, desc, ip, vcid, mtu);
+          break;
+        case "eci":
+          result = generateEciConfig(iface, vlan, desc, ip, vcid, mtu);
+          break;
+        default:
+          alert("Vendor not supported");
+          return;
+      }
+      outputArea.value = result;
+    } else {
+      // Combo mode - two sides
+      // PE1
+      const iface1 = document.getElementById('int2_1').value.trim();
+      const vlan1 = document.getElementById('vlan2_1').value.trim();
+      const desc1 = document.getElementById('desc2_1').value.trim();
+      const ip1 = document.getElementById('ip2_1').value.trim();
+      const vcid1 = document.getElementById('vcid2_1').value.trim();
+      const mtu1 = document.getElementById('mtu2_1').value.trim();
+      const pwclass1 = document.getElementById('pwclass2_1').value.trim();
+
+      // PE2
+      const iface2 = document.getElementById('int2_2').value.trim();
+      const vlan2 = document.getElementById('vlan2_2').value.trim();
+      const desc2 = document.getElementById('desc2_2').value.trim();
+      const ip2 = document.getElementById('ip2_2').value.trim();
+      const vcid2 = document.getElementById('vcid2_2').value.trim();
+      const mtu2 = document.getElementById('mtu2_2').value.trim();
+      const pwclass2 = document.getElementById('pwclass2_2').value.trim();
+
+      // Validation all required
+      const fields = [
+        [iface1, "PE1 Interface"], [vlan1, "PE1 VLAN"], [desc1, "PE1 Description"],
+        [ip1, "PE1 Remote IP"], [vcid1, "PE1 VC ID"],
+        [iface2, "PE2 Interface"], [vlan2, "PE2 VLAN"], [desc2, "PE2 Description"],
+        [ip2, "PE2 Remote IP"], [vcid2, "PE2 VC ID"]
+      ];
+
+      for (const [field, name] of fields) {
+        if (!validateNotEmpty(field, name)) return;
+      }
+
+      // Identify PE1 vendor and PE2 vendor
+      let vendor1 = val.split('-')[0]; // e.g. "cisco" from "cisco-juniper"
+      let vendor2 = val.split('-')[1];
+
+      // generate each side's config snippet
+      let config1 = "";
+      let config2 = "";
+
+      switch(vendor1) {
+        case "cisco":
+          config1 = generateCiscoConfig(iface1, vlan1, desc1, ip1, vcid1, mtu1, pwclass1);
+          break;
+        case "juniper":
+          config1 = generateJuniperConfig(iface1, vlan1, desc1, ip1, vcid1, mtu1);
+          break;
+        case "alcatel":
+          config1 = generateAlcatelConfig(iface1, vlan1, desc1, ip1, vcid1, mtu1);
+          break;
+        case "eci":
+          config1 = generateEciConfig(iface1, vlan1, desc1, ip1, vcid1, mtu1);
+          break;
+        default:
+          alert("PE1 vendor not supported");
+          return;
+      }
+
+      switch(vendor2) {
+        case "cisco":
+          config2 = generateCiscoConfig(iface2, vlan2, desc2, ip2, vcid2, mtu2, pwclass2);
+          break;
+        case "juniper":
+          config2 = generateJuniperConfig(iface2, vlan2, desc2, ip2, vcid2, mtu2);
+          break;
+        case "alcatel":
+          config2 = generateAlcatelConfig(iface2, vlan2, desc2, ip2, vcid2, mtu2);
+          break;
+        case "eci":
+          config2 = generateEciConfig(iface2, vlan2, desc2, ip2, vcid2, mtu2);
+          break;
+        default:
+          alert("PE2 vendor not supported");
+          return;
+      }
+
+      outputArea.value = `--- PE1 Configuration (${vendor1.toUpperCase()}) ---\n${config1}\n--- PE2 Configuration (${vendor2.toUpperCase()}) ---\n${config2}`;
+    }
+  }
+
+  function downloadConfig() {
+    const content = outputArea.value;
+    if (!content.trim()) {
+      alert("No config to download. Please generate first.");
+      return;
+    }
+    const blob = new Blob([content], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'mop_config.txt';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+</script>
+
 </body>
 </html>
